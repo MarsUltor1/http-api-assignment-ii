@@ -1,6 +1,5 @@
 const http = require('http');
 const url = require('url');
-const query = require('querystring');
 const jsonHandler = require('./jsonResponses.js');
 const htmlHandler = require('./htmlResponses.js');
 
@@ -17,12 +16,32 @@ const urlStruct = {
     HEAD: {
         '/getUsers': jsonHandler.getUsersMeta,
         '/notReal': jsonHandler.notRealMeta,
-        notFound: jsonHandler.notFoundMeta,
+        notFound: jsonHandler.notFound,
     },
     POST: {
         '/addUser': jsonHandler.addUser,
         notFound: jsonHandler.notFound,
     },
+};
+
+const parseBody = (request, response, handler) => {
+    const body = [];
+
+    request.on('error', (err) => {
+        console.dir(err);
+        response.statusCode = 400;
+        response.end();
+    });
+
+    request.on('data', (chunk) => {
+        body.push(chunk);
+    });
+
+    request.on('end', () => {
+        const bodyString = Buffer.concat(body).toString();
+        const bodyParams = query.parse(bodyString);
+        handler(request, response, bodyParams);
+    });
 };
 
 const onRequest = (request, response) => {
@@ -33,9 +52,17 @@ const onRequest = (request, response) => {
         return urlStruct.HEAD.notFound(request, response); // Send 404 error code
     }
 
+
+
     // Check for handled response url
     if (urlStruct[request.method][parsedUrl.pathname]) {
-        return urlStruct[request.method][parsedUrl.pathname](request, response); // Handle response
+        // Handle POST requests
+        if (request.method === POST) {
+            return parseBody(request, response, urlStruct[request.method][parsedUrl.pathname]);
+        }
+
+        // Handle GET and HEAD requests
+        return urlStruct[request.method][parsedUrl.pathname](request, response);
     }
 
     return urlStruct[request.method].notFound(request, response); // Send 404 and maybe body
