@@ -22,7 +22,8 @@
           title.innerText = 'Created';
           break;
         case 204:
-          title.innerText = 'Updated (No Content)'
+          title.innerText = 'Updated (No Content)';
+          break;
         case 400:
           title.innerText = 'Bad Request';
           break;
@@ -39,13 +40,20 @@
       content.appendChild(title); 
 
       // Set body if it has one
-      if (parseJSON && response.status !== 201) {
+      if (parseJSON && response.status !== 204) {
         // Get body json
         let obj = await response.json();
-        let jsonString = JSON.stringify(obj);
+        console.log(obj);
 
-        // Set the message text
-        message.innerText = jsonString;
+        // Check if it has a message
+        if (obj.message) {
+          message.innerText = `Message: ${obj.message}`;
+        }
+        // Check if it has users obj
+        else if (obj.users) {
+          message.innerText = JSON.stringify(obj.users);
+        }
+        
 
         // Add message to content
         content.appendChild(message);
@@ -105,7 +113,7 @@
 
       const getUser = (e) => {
         e.preventDefault();
-        sendAddUserRequest(getUserForm);
+        sendGetUserRequest(getUserForm);
         return false;
       }
 

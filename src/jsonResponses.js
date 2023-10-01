@@ -1,26 +1,33 @@
-const query = require('querystring');
-
 const users = {}; // Hold created users while server is running
 
 const respondJSON = (request, response, status, object) => {
-    response.writeHead(status, 'application/json');
-    response.write(JSON.stringify(object));
-    response.end();
-}
+  response.writeHead(status, 'application/json');
+  response.write(JSON.stringify(object));
+  response.end();
+};
 
 const respondJSONMeta = (request, response, status) => {
-    response.writeHead(status, 'application/json');
-    response.end();
-}
+  response.writeHead(status, 'application/json');
+  response.end();
+};
+
+const notFound = (request, response) => {
+  const resObj = {
+    message: 'The page you are looking for was not found.',
+    id: 'notFound',
+  };
+
+  return respondJSON(request, response, 404, resObj);
+};
 
 // Send back the users object
 const getUsers = (request, response) => {
-    const resObj = {
-        users,
-    }
+  const resObj = {
+    users,
+  };
 
-    return respondJSON(request, response, 200, resObj);
-}
+  return respondJSON(request, response, 200, resObj);
+};
 
 // Send the head for getUser request
 const getUsersMeta = (request, response) => respondJSONMeta(request, response, 200);
@@ -33,53 +40,44 @@ const notRealMeta = (request, response) => respondJSONMeta(request, response, 40
 
 // Add user to users object
 const addUser = (request, response, body) => {
-    const resObj = {
-        message: 'User requires both name and age.',
-    }
+  const resObj = {
+    message: 'User requires both name and age.',
+  };
 
-    // Check for required name and age
-    if (!body.name || !body.age) {
-        resObj.id = 'missingParams';
-        return respondJSON(request, response, 400, responseJSON);
-    }
+  // Check for required name and age
+  if (!body.name || !body.age) {
+    resObj.id = 'addUserMissingParams';
+    return respondJSON(request, response, 400, resObj);
+  }
 
-    // set updated status code as default
-    let resCode = 204;
+  // set updated status code as default
+  let resCode = 204;
 
-    // Create new user
-    if (!users[body.name]) {
-        resCode = 201; // override status code with created
-        users[body.name] = {} 
-    }
+  // Create new user
+  if (!users[body.name]) {
+    resCode = 201; // override status code with created
+    users[body.name] = {};
+  }
 
-    // Set user fields
-    users[body.name].name = body.name;
-    users[body.name].age = body.age;
+  // Set user fields
+  users[body.name].name = body.name;
+  users[body.name].age = body.age;
 
-    // Send created response
-    if (resCode === 201) {
-        resObj.message = 'Created Successfully';
-        return respondJSON(request, response, resCode, resObj);
-    }
+  // Send created response
+  if (resCode === 201) {
+    resObj.message = 'Created Successfully';
+    return respondJSON(request, response, resCode, resObj);
+  }
 
-    // Send updated response
-    return respondJSONMeta(request, response, resCode);
-}
-
-const notFound = (request, response) => {
-    const resObj = {
-        message: 'The page you are looking for was not found.',
-        id: 'notFound',
-    }
-
-    return respondJSON(request, response, 404, resObj);
-}
+  // Send updated response
+  return respondJSONMeta(request, response, resCode);
+};
 
 module.exports = {
-    getUsers,
-    getUsersMeta,
-    notReal,
-    notRealMeta,
-    addUser,
-    notFound,
-}
+  getUsers,
+  getUsersMeta,
+  notReal,
+  notRealMeta,
+  addUser,
+  notFound,
+};
